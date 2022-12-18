@@ -1,0 +1,206 @@
+html {
+  background-color: #000;
+  color: #fff;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Generic modals.
+ *********************************************************/
+
+.modalBlotter {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100;
+  background-color: #000;
+  opacity: 0.8;
+}
+
+.modalStack {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 101;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modalStack .modalFrame {
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #000;
+  border-radius: 1em;
+  box-shadow: #000 0 0 2em 0.5em;
+  padding: 1em;
+  position: absolute;
+}
+
+/* RootUi.
+ *************************************************************/
+ 
+.RootUi {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Toolbar.
+ *************************************************************/
+ 
+.ToolbarUi {
+  height: 2em;
+  border-bottom: 1px solid #888;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.VisibilityUi { /* Container in Toolbar for both the button and the popup. */
+  position: relative;
+}
+
+.VisibilityUi > .popup {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  min-width: 2em;
+  min-height: 2em;
+  background-color: #000;
+  border: 1px solid #000;
+  box-shadow: #000 0 0 1em;
+  z-index: 1;
+}
+
+/* Editor.
+ *************************************************************/
+ 
+.EditorUi {
+  flex: 1;
+  position: relative;
+}
+
+.EditorUi .scroller {
+  overflow: scroll;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.EditorUi .scroller .scrollSizer {
+  width: 0;
+  height: 0;
+}
+
+.EditorUi .ChartUi {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+/* QuantizationModal.
+ *********************************************************/
+ 
+.QuantizationModal {
+  min-width: 30vw;
+}
+
+.QuantizationModal > table {
+  width: 100%;
+}
+
+.QuantizationModal tr:nth-child(odd) {
+  background-color: #ddd;
+}
+
+/* EventsModal.
+ ********************************************************/
+ 
+.EventsModal {
+  min-width: 40vw;
+}
+
+/* EventListModal.
+ ****************************************************************/
+ 
+.EventListModal {
+  min-width: 50vw;
+}
+ 
+.EventListModal .eventListScroller {
+  overflow-y: scroll;
+  height: 80vh;
+}
+ 
+.EventListModal .eventList {
+  width: 100%;
+  user-select: none;
+  cursor: pointer;
+}
+
+.EventListModal .eventList tr.header {
+  position: sticky;
+  top: 0;
+}
+
+.EventListModal .eventList tr.event:hover {
+  background-color: #00f;
+  color: #ff0;
+}
+
+.EventListModal .eventList tr:nth-child(odd) {
+  background-color: #ddd;
+}
+
+/* ChannelHeadersModal.
+ ***********************************************************/
+ 
+.ChannelHeadersModal {
+  min-width: 50vw;
+}
+
+.ChannelHeadersModal > table {
+  width: 100%;
+}
+
+.ChannelHeadersModal td.eventId {
+  width: 2em;
+}
+
+.ChannelHeadersModal td.program {
+  display: flex;
+  flex-direction: column;
+}
+
+.ChannelHeadersModal .programTattle {
+  white-space: nowrap;
+  font-size: 8pt;
+  font-family: sans-serif;
+}
+
+.ChannelHeadersModal .volumeTattle {
+  display: inline-block;
+  min-width: 2em;
+}
+
+.ChannelHeadersModal .panTattle {
+  display: inline-block;
+  min-width: 2em;
+}
+
+.ChannelHeadersModal tr:nth-child(odd) {
+  background-color: #ddd;
+}
