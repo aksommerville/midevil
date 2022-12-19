@@ -9,6 +9,7 @@ import { Dom } from "../util/Dom.js";
 import { MidiSerial } from "../midi/MidiSerial.js";
 import { ChartEditor } from "./ChartEditor.js";
 import { ChartRenderer } from "./ChartRenderer.js";
+import { PlayheadRibbon } from "./PlayheadRibbon.js";
 
 class MouseTattleEvent extends Event {
   constructor(message) {
@@ -16,18 +17,22 @@ class MouseTattleEvent extends Event {
     this.message = message;
   }
 }
- 
+
+/* Instantiator must provide a PlayheadRibbon.
+ * If you forget, horrible injection errors could ensue.
+ */
 export class ChartUi extends EventTarget {
   static getDependencies() {
-    return [HTMLCanvasElement, Dom, Window, ChartEditor, ChartRenderer];
+    return [HTMLCanvasElement, Dom, Window, ChartEditor, ChartRenderer, PlayheadRibbon];
   }
-  constructor(element, dom, window, chartEditor, chartRenderer) {
+  constructor(element, dom, window, chartEditor, chartRenderer, playheadRibbon) {
     super();
     this.element = element;
     this.dom = dom;
     this.window = window;
     this.chartEditor = chartEditor;
     this.chartRenderer = chartRenderer;
+    this.playheadRibbon = playheadRibbon;
     
     // Wire up the kids.
     // (ChartUi, ChartEditor, ChartRenderer) are separate classes just to avoid a ten-thousand-line file.
@@ -40,6 +45,7 @@ export class ChartUi extends EventTarget {
     this.renderPending = false;
     this.previousMouseTattleMessage = "";
     this.mouseState = false;
+    this.noteHighlights = []; // {noteid,expiry}
     
     // I do this pro forma, but in reality we do not receive mousedown events from the browser.
     // There's a transparent scroller above us that gets them and calls our onMouseDown with an artificial event.
@@ -90,12 +96,33 @@ export class ChartUi extends EventTarget {
     this.renderSoon();
   }
   
+  highlightRowForMidiInput(noteid) {
+    if (noteid < 0) return;
+    if (noteid > 0x7f) return;
+    const ttl = 500;
+    this.noteHighlights.push({ noteid, expiry: Date.now() + ttl });
+    this.window.setTimeout(() => this.reviewNoteHighlights(), ttl + 10);
+    this.renderSoon();
+  }
+  
+  reviewNoteHighlights() {
+    const now = Date.now();
+    for (let i=this.noteHighlights.length; i-->0; ) {
+      const highlight = this.noteHighlights[i];
+      if (highlight.expiry <= now) {
+        this.noteHighlights.splice(i, 1);
+        this.renderSoon();
+      }
+    }
+  }
+  
   renderSoon() {
     if (this.renderPending) return;
     this.renderPending = true;
     this.window.requestAnimationFrame(() => {
       this.renderPending = false;
       this.chartRenderer.render(this.element);
+      this.playheadRibbon.render();
     });
   }
   

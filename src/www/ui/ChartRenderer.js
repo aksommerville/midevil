@@ -69,6 +69,16 @@ export class ChartRenderer {
     return [x, y, time, noteid, events];
   }
   
+  songTimeForViewX(x) {
+    if (!this.chartUi.song) return 0;
+    return ((x + this.scrollX) * this.chartUi.song.division) / this.qnoteWidthPixels;
+  }
+  
+  viewXForSongTime(time) {
+    if (!this.chartUi.song) return 0;
+    return (time * this.qnoteWidthPixels) / this.chartUi.song.division - this.scrollX;
+  }
+  
   /* Render.
    **************************************************************************************/
   
@@ -97,8 +107,16 @@ export class ChartRenderer {
     const rowz = Math.min(127, Math.ceil((this.scrollY + fullh) / this.rowHeightPixels));
     let y = rowa * this.rowHeightPixels - this.scrollY;
     let noteid = 0x7f - rowa;
+    let highlightRows;
+    if (this.chartUi.noteHighlights.length) {
+      highlightRows = new Set(this.chartUi.noteHighlights.map(h => h.noteid));
+    } else {
+      highlightRows = new Set();
+    }
     for (let row=rowa; row<=rowz; row++, y+=this.rowHeightPixels, noteid--) {
-      if ((noteid >= 0x3c) && (noteid < 0x48)) { // C4..B4
+      if (highlightRows.has(noteid)) {
+        context.fillStyle = "#ffff00";
+      } else if ((noteid >= 0x3c) && (noteid < 0x48)) { // C4..B4
         context.fillStyle = (row & 1) ? "#1c1c1c" : "#181818";
       } else {
         context.fillStyle = (row & 1) ? "#101010" : "#141414";

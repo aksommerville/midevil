@@ -40,6 +40,8 @@ export class VisibilityUi extends EventTarget {
     
     this.trackCount = 0;
     
+    this.element.classList.add("poppable");
+    
     this.buildUi();
     this.populateUi();
   }

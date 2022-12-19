@@ -6,6 +6,8 @@ import { Dom } from "../util/Dom.js";
 import { Song } from "../midi/Song.js";
 import { ChartUi } from "./ChartUi.js";
 import { MidiBus } from "../midi/MidiBus.js";
+import { PlayheadRibbon } from "./PlayheadRibbon.js";
+import { SongPlayService } from "../midi/SongPlayService.js";
 
 class SongDirtyEvent extends Event {
   constructor(cb) {
@@ -23,17 +25,19 @@ class TrackCountChangedEvent extends Event {
 
 export class EditorUi extends EventTarget {
   static getDependencies() {
-    return [HTMLElement, Dom, MidiBus, Window];
+    return [HTMLElement, Dom, MidiBus, Window, SongPlayService];
   }
-  constructor(element, dom, midiBus, window) {
+  constructor(element, dom, midiBus, window, songPlayService) {
     super();
     this.element = element;
     this.dom = dom;
     this.midiBus = midiBus;
     this.window = window;
+    this.songPlayService = songPlayService;
     
     this.song = null;
     this.chartUi = null;
+    this.playheadRibbon = null;
     
     this.buildUi();
     
@@ -66,6 +70,7 @@ export class EditorUi extends EventTarget {
       this.song = new Song(serial);
       this.song.combine();
       this.chartUi.setSong(this.song);
+      this.songPlayService.setSong(this.song);
       this.dispatchEvent(new SongDirtyEvent(() => {
         const dst = this.song.encode();
         this.song.combine();
@@ -75,6 +80,7 @@ export class EditorUi extends EventTarget {
     } else {
       this.song = null;
       this.chartUi.setSong(null);
+      this.songPlayService.setSong(null);
       this.dispatchEvent(new SongDirtyEvent(null));
       this.dispatchEvent(new TrackCountChangedEvent(0));
     }
@@ -84,6 +90,7 @@ export class EditorUi extends EventTarget {
   // Owner may call for a full reset, eg after changing division, or other broad Song changes.
   reset() {
     this.chartUi.setSong(this.song);
+    this.songPlayService.setSong(this.song);
   }
   
   /* (x,y) must be in 0..1000.
@@ -100,8 +107,11 @@ export class EditorUi extends EventTarget {
   buildUi() {
     this.element.innerHTML = "";
     
-    this.chartUi = this.dom.spawnController(this.element, ChartUi);
+    this.playheadRibbon = this.dom.spawnController(this.element, PlayheadRibbon);
+    
+    this.chartUi = this.dom.spawnController(this.element, ChartUi, [this.playheadRibbon]);
     this.chartUi.addEventListener("mid.timesChanged", () => this.resizeScroller());
+    this.playheadRibbon.chartRenderer = this.chartUi.chartRenderer;
     
     const scroller = this.dom.spawn(this.element, "DIV", ["scroller"]);
     const scrollSizer = this.dom.spawn(scroller, "DIV", ["scrollSizer"]);
@@ -128,7 +138,13 @@ export class EditorUi extends EventTarget {
   }
   
   onMidiMessage(event) {
-    console.log(`TODO EditorUi.onMidiMessage ${event.device.id} ${JSON.stringify(Array.from(event.data))}`);
+    // Maybe MIDI input is not EditorUi's problem?
+    // Playthrough is managed by MidiBus, and recording by SongPlayService.
+    // Might want to do something like highlighting chart rows when a key is pressed?
+    //console.log(`TODO EditorUi.onMidiMessage ${Array.from(event.data).map(b => b.toString(16).padStart(2,'0')).join(" ")}`);
+    if ((event.data.length >= 2) && ((event.data[0] & 0xf0) === 0x90)) {
+      this.chartUi.highlightRowForMidiInput(event.data[1]);
+    }
   }
   
   onKeyDown(event) {
@@ -138,6 +154,8 @@ export class EditorUi extends EventTarget {
         event.stopPropagation();
         event.preventDefault();
       }
+    } else if (event.code === "Space") {
+      this.songPlayService.play();
     }
   }
   

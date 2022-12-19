@@ -9,15 +9,18 @@ import { QuantizationModal } from "./QuantizationModal.js";
 import { EventListModal } from "./EventListModal.js";
 import { ChannelHeadersModal } from "./ChannelHeadersModal.js";
 import { Song } from "../midi/Song.js";
+import { MidiBus } from "../midi/MidiBus.js";
  
 export class RootUi {
   static getDependencies() {
-    return [HTMLElement, Dom, Window];
+    return [HTMLElement, Dom, Window, MidiBus];
   }
-  constructor(element, dom, window) {
+  constructor(element, dom, window, midiBus) {
     this.element = element;
     this.dom = dom;
     this.window = window;
+    this.midiBus = midiBus;
+    
     this.toolbar = null;
     this.editor = null;
     this.buildUi();
@@ -124,6 +127,6 @@ export class RootUi {
   }
   
   onOutputSelection(name) {
-    console.log(`TODO RootUi.onOutputSelection ${name}`);
+    this.midiBus.playthrough(name);
   }
 }

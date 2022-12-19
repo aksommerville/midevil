@@ -250,7 +250,44 @@ export class Song {
     return lo;
   }
   
-  /* Encode.
+  /* Give us a time in ticks, and an encoded event right off the wire.
+   * If it's valid, we return the decoded event, which is also added to (this.events).
+   */
+  addEncodedEventAtTime(time, serial) {
+    if (time < 0) return null;
+    if (!serial || (serial.length < 1)) return null;
+    if (serial[0] < 0x80) return null;
+    if (serial[0] >= 0xf0) return null; // Forbidding Sysex and Realtime.
+    if (this.combined && ((serial[0] & 0xf0) === 0x80)) return null; // No Note Off if we're in combined mode, please.
+    const event = this.createEvent(time);
+    if (!event) return null;
+    event.opcode = serial[0] & 0xf0;
+    event.chid = serial[0] & 0x0f;
+    event.a = serial[1] || 0;
+    event.b = serial[2] || 0;
+    return event;
+  }
+  
+  /* Encode single event for live playback.
+   * Null if this event should not travel on the bus, eg Meta.
+   * Otherwise a Uint8Array ready to deliver to a MIDI output device.
+   ****************************************************************/
+   
+  encodeEventForPlayback(event) {
+    switch (event.opcode) {
+      case 0x80: case 0x90: case 0xa0: case 0xb0: case 0xe0: {
+          return new Uint8Array([event.opcode | event.chid, event.a, event.b]);
+        }
+      case 0xc0: case 0xd0: {
+          return new Uint8Array([event.opcode | event.chid, event.a]);
+        }
+      case 0xf0: break; //TODO Do we want to send Sysex?
+      case 0xf7: break; // ''
+    }
+    return null;
+  }
+  
+  /* Encode to file.
    ***************************************************************/
    
   encode() {

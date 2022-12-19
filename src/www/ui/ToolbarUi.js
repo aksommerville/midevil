@@ -6,6 +6,8 @@ import { Dom } from "../util/Dom.js";
 import { Operations } from "../midi/Operations.js";
 import { MidiBus } from "../midi/MidiBus.js";
 import { VisibilityUi } from "./VisibilityUi.js";
+import { SongPlayService } from "../midi/SongPlayService.js";
+import { MetronomeUi } from "./MetronomeUi.js";
 
 class OpenFileEvent extends Event {
   constructor(name, content) {
@@ -39,19 +41,21 @@ class OutputSelectionEvent extends Event {
 
 export class ToolbarUi extends EventTarget {
   static getDependencies() {
-    return [HTMLElement, Dom, Window, Operations, MidiBus];
+    return [HTMLElement, Dom, Window, Operations, MidiBus, SongPlayService];
   }
-  constructor(element, dom, window, operations, midiBus) {
+  constructor(element, dom, window, operations, midiBus, songPlayService) {
     super();
     this.element = element;
     this.dom = dom;
     this.window = window;
     this.operations = operations;
     this.midiBus = midiBus;
+    this.songPlayService = songPlayService;
     
     this.fileName = "";
     this.encodeFile = null; // () => ArrayBuffer
     this.visibilityUi = null;
+    this.metronomeUi = null;
     
     this.buildUi();
     
@@ -129,6 +133,14 @@ export class ToolbarUi extends EventTarget {
     this.visibilityUi = this.dom.spawnController(this.element, VisibilityUi);
     
     this.dom.spawn(this.element, "DIV", ["mouseTattle"]);
+    
+    this.dom.spawn(this.element, "INPUT", { type: "button", value: "|<", "on-click": () => this.songPlayService.skipBackward() });
+    this.dom.spawn(this.element, "INPUT", { type: "button", value: ">", "on-click": () => this.songPlayService.play() });
+    this.dom.spawn(this.element, "INPUT", { type: "button", value: ">|", "on-click": () => this.songPlayService.skipForward() });
+    this.dom.spawn(this.element, "INPUT", { type: "button", value: "O", "on-click": () => this.songPlayService.record() });
+    this.dom.spawn(this.element, "INPUT", { type: "button", value: "!!!", "on-click": () => this.midiBus.panic() });
+    
+    this.metronomeUi = this.dom.spawnController(this.element, MetronomeUi);
   }
   
   populateOutputMenu(devices) {

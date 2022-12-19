@@ -33,6 +33,8 @@ export class MidiBus extends EventTarget {
     this.midiAccess = null;
     this.pollPending = false;
     this.inputListeners = []; // [device, cb] so we can unlisten on state changes
+    this.playthroughDevice = null; // Output device, we echo all inputs to it.
+    // "playthroughDevice" is also the main output, poor choice of name initially. There's just one output.
     
     if (this.window.navigator.requestMIDIAccess) {
       this.window.navigator.requestMIDIAccess().then(access => {
@@ -55,6 +57,30 @@ export class MidiBus extends EventTarget {
   getInputDevices() {
     if (!this.midiAccess) return [];
     return Array.from(this.midiAccess.inputs).map(([id, device]) => device);
+  }
+  
+  playthrough(outputDeviceId) {
+    if (!this.midiAccess) return false;
+    for (const [id, device] of this.midiAccess.outputs) {
+      if (device.id === outputDeviceId) {
+        this.playthroughDevice = device;
+        return true;
+      }
+    }
+    if (this.playthroughDevice) {
+      try { this.playthroughDevice.send([0xff]); } catch (e) {}
+      this.playthroughDevice = null;
+    }
+    return false;
+  }
+  
+  sendOutput(serial) {
+    if (!this.playthroughDevice) return;
+    this.playthroughDevice.send(serial);
+  }
+  
+  panic() {
+    this.sendOutput([0xff]);
   }
   
   // When I connect a device, I get half a dozen state change events (Linux, Chrome, MPK225). Debounce.
@@ -93,6 +119,9 @@ export class MidiBus extends EventTarget {
   
   onMidiMessage(event) {
     this.dispatchEvent(new MidiEvent(event.target, event.data));
+    if (this.playthroughDevice) {
+      this.playthroughDevice.send(event.data);
+    }
   }
 }
 
