@@ -78,5 +78,6 @@ export class MetronomeUi extends EventTarget {
     this.songPlayService.metronomeChid = +this.element.querySelector("input[name='chid']").value;
     this.songPlayService.metronomeNoteid = +this.element.querySelector("input[name='noteid']").value;
     this.songPlayService.metronomeVelocity = +this.element.querySelector("input[name='velocity']").value;
+    this.songPlayService.calculateMetronomeNextTime();
   }
 }

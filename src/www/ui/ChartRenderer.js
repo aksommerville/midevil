@@ -5,9 +5,10 @@
  
 export class ChartRenderer {
   static getDependencies() {
-    return [];
+    return [Document];
   }
-  constructor() {
+  constructor(document) {
+    this.document = document;
   
     // Owner must set upon construction.
     this.chartUi = null;
@@ -31,8 +32,41 @@ export class ChartRenderer {
   }
   
   setScale(x, y) {
-    this.qnoteWidthPixels = 1 + (x * 256) / 1000;
-    this.rowHeightPixels = 1 + (y * 16) / 1000;
+    
+    // Determine how much view area we have. This isn't exposed by ChartUi (it doesn't know either), so get hacky.
+    // Don't let it be less than (1,1).
+    const scroller = this.document.querySelector(".EditorUi .scroller");
+    let vieww = 0, viewh = 0;
+    if (scroller) {
+      vieww = scroller.clientWidth;
+      viewh = scroller.clientHeight;
+    }
+    if (vieww < 1) vieww = 640;
+    if (viewh < 1) viewh = 480;
+    
+    const xmin = 1 / this.VERT_LINE_SPACING_MIN; // arbitrary minimum (ticks/pixel)
+    const ymin = 1 / 16; // '' (notes/pixel)
+    const ymax = 128 / viewh;
+    let xmax = 0, ticksPerQnote = 1;;
+    if (this.chartUi.song) {
+      const slopTicks = 4 * this.chartUi.song.division; // extra right-hand slop
+      xmax = (this.chartUi.song.getDurationTicks() + slopTicks) / vieww;
+      ticksPerQnote = this.chartUi.song.division;
+    }
+    let curvex = x, curvey = y;
+    if (xmax <= xmin) {
+      this.qnoteWidthPixels = ticksPerQnote / xmin;
+    } else {
+      // I'm not convinced that this does much... but it feels ok, so ok.
+      const base = 100;
+      curvex = (Math.pow(base, x / 1000) - 1) / (base - 1);
+      this.qnoteWidthPixels = ticksPerQnote / (xmin + ((curvex * (xmax - xmin)) / 1));
+    }
+    if (ymax <= ymin) {
+      this.rowHeightPixels = 1 / ymin;
+    } else {
+      this.rowHeightPixels = 1 / (ymin + ((y * (ymax - ymin)) / 1000));
+    }
   }
   
   setScroll(x, y) {
@@ -77,6 +111,19 @@ export class ChartRenderer {
   viewXForSongTime(time) {
     if (!this.chartUi.song) return 0;
     return (time * this.qnoteWidthPixels) / this.chartUi.song.division - this.scrollX;
+  }
+  
+  viewYForNoteid(noteid) {
+    return (0x7f - noteid + 0.5) * this.rowHeightPixels - this.scrollY;
+  }
+  
+  unscrolledXForSongTime(time) {
+    if (!this.chartUi.song) return 0;
+    return (time * this.qnoteWidthPixels) / this.chartUi.song.division;
+  }
+  
+  unscrolledYForNoteid(noteid) {
+    return (0x7f - noteid + 0.5) * this.rowHeightPixels;
   }
   
   /* Render.

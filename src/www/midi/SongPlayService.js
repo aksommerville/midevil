@@ -64,7 +64,7 @@ export class SongPlayService extends EventTarget {
     this.metronomeChid = 9;
     this.metronomeNoteid = 56; // GM cowbell
     this.metronomeVelocity = 0x7f;
-    this.metronomeRate = 1; // qnotes XXX should be zero
+    this.metronomeRate = 0; // qnotes
     this.metronomeNextTime = 0; // absolute ms
     
     /* Important! The song has Note On and Note Off combined. We need to track held notes and generate those Note Offs ourselves.

@@ -62,54 +62,30 @@ body {
  *************************************************************/
  
 .ToolbarUi {
-  height: 2em;
   border-bottom: 1px solid #888;
+  display: flex;
+  flex-direction: column;
+}
+
+.ToolbarUi > * {
   display: flex;
   flex-direction: row;
   align-items: center;
 }
 
 .ToolbarUi .mouseTattle {
-  width: 10em;
   font-family: sans-serif;
   font-size: 9pt;
   overflow: hidden;
   white-space: nowrap;
 }
 
-/**
-.VisibilityUi {
-  position: relative;
+.ToolbarUi .playheadTattle {
+  font-family: monospace;
+  font-size: 9pt;
+  overflow: hidden;
+  white-space: pre;
 }
-
-.VisibilityUi > .popup {
-  position: absolute;
-  left: 0;
-  top: 100%;
-  min-width: 2em;
-  min-height: 2em;
-  background-color: #000;
-  border: 1px solid #000;
-  box-shadow: #000 0 0 1em;
-  z-index: 1;
-}
-
-.MetronomeUi {
-  position: relative;
-}
-
-.MetronomeUi > .popup {
-  position: absolute;
-  left: 0;
-  top: 100%;
-  min-width: 2em;
-  min-height: 2em;
-  background-color: #000;
-  border: 1px solid #000;
-  box-shadow: #000 0 0 1em;
-  z-index: 1;
-}
-/**/
 
 .poppable { /* VisibilityUi, MetronomeUi */
   position: relative;

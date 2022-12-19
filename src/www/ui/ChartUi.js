@@ -46,6 +46,8 @@ export class ChartUi extends EventTarget {
     this.previousMouseTattleMessage = "";
     this.mouseState = false;
     this.noteHighlights = []; // {noteid,expiry}
+    this.scaleX = 0;
+    this.scaleY = 0;
     
     // I do this pro forma, but in reality we do not receive mousedown events from the browser.
     // There's a transparent scroller above us that gets them and calls our onMouseDown with an artificial event.
@@ -73,6 +75,7 @@ export class ChartUi extends EventTarget {
   setSong(song) {
     this.song = song;
     this.chartEditor.reset();
+    this.chartRenderer.setScale(this.scaleX, this.scaleY);
     this.renderSoon();
   }
   
@@ -81,8 +84,22 @@ export class ChartUi extends EventTarget {
   }
   
   setScale(x, y) {
+    
+    const halfw = this.element.clientWidth / 2;
+    const halfh = this.element.clientHeight / 2;
+    const centerLocation = this.chartRenderer.locateEvent(halfw, halfh, false);
+    
+    this.scaleX = x;
+    this.scaleY = y;
     this.chartRenderer.setScale(x, y);
     this.renderSoon();
+    
+    const scroller = this.window.document.querySelector(".EditorUi .scroller"); // cheating a little
+    if (scroller) {
+      const dstx = this.chartRenderer.unscrolledXForSongTime(centerLocation[2]) - halfw;
+      const dsty = this.chartRenderer.unscrolledYForNoteid(centerLocation[3]) - halfh;
+      scroller.scroll(dstx, dsty);
+    }
   }
   
   setScroll(x, y) {
