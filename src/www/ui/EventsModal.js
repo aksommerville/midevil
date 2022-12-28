@@ -14,6 +14,13 @@ class EventsEditedEvent extends Event {
   }
 }
 
+class DeleteEventsEvent extends Event {
+  constructor(events) {
+    super("mid.deleteEvents");
+    this.events = events;
+  }
+}
+
 export class EventsModal extends EventTarget {
   static getDependencies() {
     return [HTMLElement, Dom];
@@ -125,6 +132,11 @@ export class EventsModal extends EventTarget {
     this.events = this.copyEvents(this.originalEvents);
     this.dispatchEvent(new EventsEditedEvent(this.events));
     this.populateUi();
+  }
+  
+  onDelete() {
+    this.dispatchEvent(new DeleteEventsEvent(this.events));
+    this.dom.popModal(this);
   }
   
   /* Apply one change from UI to model.
@@ -312,6 +324,7 @@ export class EventsModal extends EventTarget {
     this.spawnButtonsRow(table, [
       ["Quantize", () => this.onQuantize()],
       ["Reset", () => this.onReset()],
+      ["Delete", () => this.onDelete()],
     ]);
   }
   
@@ -352,6 +365,8 @@ export class EventsModal extends EventTarget {
     this.spawnButtonsRow(table, [
       ["Quantize", () => this.onQuantize()],
       ["Reset", () => this.onReset()],
+      // "Delete" works just the same as for single, but let's accentuate the fact that there's more than one event.
+      [`!!! Delete ${events.length} events !!!`, () => this.onDelete()],
     ]);
   }
   

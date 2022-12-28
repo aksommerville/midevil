@@ -412,6 +412,7 @@ export class ChartEditor {
     const eventsModal = this.dom.spawnModal(EventsModal);
     eventsModal.setTicksPerQnote(this.chartUi.song.division);
     eventsModal.setEvents(events);
+    
     eventsModal.addEventListener("mid.eventsEdited", (editedEvent) => {
       if (!this.chartUi.song) return;
       let needSort = false, needRender = false;
@@ -430,6 +431,17 @@ export class ChartEditor {
         this.chartUi.dispatchEvent(new TimesChangedEvent());
       }
       if (needRender) this.chartUi.renderSoon();
+    });
+    
+    eventsModal.addEventListener("mid.deleteEvents", (deleteEvent) => {
+      if (!this.chartUi.song) return;
+      for (const e of deleteEvent.events) {
+        const p = this.chartUi.song.events.findIndex(ee => ee.id === e.id);
+        if (p < 0) continue;
+        this.chartUi.song.events.splice(p, 1);
+      }
+      this.selectedEvents = this.selectedEvents.filter(e => !deleteEvent.events.find(ee => ee.id === e.id));
+      this.chartUi.renderSoon();
     });
   }
   

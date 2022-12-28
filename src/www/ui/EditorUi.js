@@ -93,6 +93,12 @@ export class EditorUi extends EventTarget {
     this.songPlayService.setSong(this.song);
   }
   
+  // Narrower reset, look for lost events.
+  eventsDeleted(events) {
+    this.chartUi.chartEditor.selectedEvents = this.chartUi.chartEditor.selectedEvents.filter(e => !events.find(ee => ee.id === e.id));
+    this.chartUi.renderSoon();
+  }
+  
   /* (x,y) must be in 0..1000.
    * These are arbitrary numbers, we make up something reasonable for their exact meaning.
    * Higher value means zoom in.

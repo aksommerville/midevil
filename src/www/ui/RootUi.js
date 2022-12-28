@@ -86,6 +86,9 @@ export class RootUi {
     modal.addEventListener("mid.eventChanged", (event) => {
       this.editor.chartUi.chartEditor.applyEdits([event.event]);
     });
+    modal.addEventListener("mid.eventsDeleted", (event) => {
+      this.editor.eventsDeleted(event.events);
+    });
   }
   
   onQuantizeTime() {

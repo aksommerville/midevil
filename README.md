@@ -20,3 +20,4 @@ MIDI file editor that runs in a web browser.
 - [ ] VisibilityUi: Comment on track and channel options, is there anything to see for each?
 - [ ] EventsModal: Display time in MM:SS
 - [ ] Find a more elegant way to show Meta, Control, Aftertouch. Don't just print in the chart like notes.
+- [ ] Track list in visibility popup needs to update when you add a track.
