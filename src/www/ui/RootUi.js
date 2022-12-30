@@ -10,20 +10,32 @@ import { EventListModal } from "./EventListModal.js";
 import { ChannelHeadersModal } from "./ChannelHeadersModal.js";
 import { Song } from "../midi/Song.js";
 import { MidiBus } from "../midi/MidiBus.js";
+import { UndoService } from "../midi/UndoService.js";
  
 export class RootUi {
   static getDependencies() {
-    return [HTMLElement, Dom, Window, MidiBus];
+    return [HTMLElement, Dom, Window, MidiBus, UndoService];
   }
-  constructor(element, dom, window, midiBus) {
+  constructor(element, dom, window, midiBus, undoService) {
     this.element = element;
     this.dom = dom;
     this.window = window;
     this.midiBus = midiBus;
+    this.undoService = undoService;
     
     this.toolbar = null;
     this.editor = null;
     this.buildUi();
+    
+    this.keyPressHandler = e => this.onKeyPress(e);
+    this.window.addEventListener("keypress", this.keyPressHandler);
+  }
+  
+  onRemoveFromDom() {
+    if (this.keyPressHandler) {
+      this.window.removeEventListener("keypress", this.keyPressHandler);
+      this.keyPressHandler = null;
+    }
   }
   
   buildUi() {
@@ -68,6 +80,7 @@ export class RootUi {
   onEditChannelHeaders() {
     if (!this.editor.song) return;
     const modal = this.dom.spawnModal(ChannelHeadersModal);
+    this.undoService.push(this.editor.song);
     modal.setup(this.editor.song);
     modal.addEventListener("mid.headersChanged", () => {
       this.editor.reset();
@@ -77,6 +90,7 @@ export class RootUi {
   onEditEvents() {
     if (!this.editor.song) return;
     const modal = this.dom.spawnModal(EventListModal);
+    this.undoService.push(this.editor.song);
     // I'm not doing so good with state ownership here, TODO use a global Store?
     modal.setup(
       this.editor.song,
@@ -95,6 +109,7 @@ export class RootUi {
     let events = this.editor.getSelectedEvents();
     if (!events?.length) events = this.editor.song?.events;
     if (!events?.length) return;
+    this.undoService.push(this.editor.song);
     const modal = this.dom.spawnModal(QuantizationModal);
     modal.setup(this.editor.song.division, events);
     modal.addEventListener("mid.quantized", (event) => {
@@ -109,6 +124,7 @@ export class RootUi {
     const division = +response;
     if ((division < 1) || (division >= 0x8000)) return;
     if (division === this.editor.song.division) return;
+    this.undoService.push(this.editor.song);
     this.editor.song.changeDivision(division);
     this.editor.reset();
   }
@@ -125,11 +141,21 @@ export class RootUi {
     if (!response) return;
     const newTempo = +response;
     if ((newTempo < 1) || (newTempo > 0xffffff)) return;
+    this.undoService.push(this.editor.song);
     this.editor.song.setTempo(newTempo);
     this.editor.reset();
   }
   
   onOutputSelection(name) {
     this.midiBus.playthrough(name);
+  }
+  
+  onKeyPress(event) {
+    if (!event.ctrlKey) return;
+    if (event.code !== "KeyZ") return;
+    if (!this.editor.song) return;
+    const replacement = this.undoService.pop(this.editor.song);
+    if (!replacement) return;
+    this.editor.loadFileDecoded(replacement);
   }
 }

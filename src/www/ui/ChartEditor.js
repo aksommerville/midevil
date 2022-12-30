@@ -21,6 +21,7 @@
 
 import { Dom } from "../util/Dom.js"; 
 import { EventsModal } from "./EventsModal.js";
+import { UndoService } from "../midi/UndoService.js";
 
 class TimesChangedEvent extends Event {
   constructor() {
@@ -31,10 +32,11 @@ class TimesChangedEvent extends Event {
 export class ChartEditor {
   static getDependencies() {
     // Dom is for spawning modals only; generally ChartUi is our Dom liaison.
-    return [Dom];
+    return [Dom, UndoService];
   }
-  constructor(dom) {
+  constructor(dom, undoService) {
     this.dom = dom;
+    this.undoService = undoService;
   
     // Owner must set upon construction.
     this.chartUi = null;
@@ -76,6 +78,7 @@ export class ChartEditor {
   onKeyDelete() {
     if (!this.selectedEvents.length) return false;
     if (this.state !== "idle") return false;
+    this.undoService.push(this.chartUi.song);
     for (const event of this.selectedEvents) {
       this.chartUi.song.deleteEventById(event.id);
     }
@@ -275,6 +278,7 @@ export class ChartEditor {
    
   beginDrag(location, forceState) {
     if (this.selectedEvents.length < 1) return;
+    this.undoService.push(this.chartUi.song);
     
     if (forceState) {
       this.state = forceState;
@@ -380,6 +384,7 @@ export class ChartEditor {
   addEvent(location) {
     if (!this.chartUi.song) return;
     if (this.state !== "idle") return;
+    this.undoService.push(this.chartUi.song);
     const time = Math.max(location.time, 0);
     const event = this.chartUi.song.createEvent(time);
     event.trackid = this.trackidForNewEvent();
@@ -409,8 +414,10 @@ export class ChartEditor {
   editEventsManually(events) {
     if (!events || (events.length < 1)) return;
     if (!this.chartUi.song) return;
+    this.undoService.push(this.chartUi.song); // Everything that happens in the modal is a single "undo" batch.
     const eventsModal = this.dom.spawnModal(EventsModal);
     eventsModal.setTicksPerQnote(this.chartUi.song.division);
+    eventsModal.setUsPerQnote(this.chartUi.song.getTempo(false));
     eventsModal.setEvents(events);
     
     eventsModal.addEventListener("mid.eventsEdited", (editedEvent) => {

@@ -3,6 +3,18 @@
  */
  
 export class MidiSerial {
+
+  static reprTime(ticks, ticksPerQnote, usPerQnote) {
+    let ms = Math.round((ticks * usPerQnote) / (ticksPerQnote * 1000));
+    if (!ms) ms = 0;
+    let s = Math.floor(ms / 1000);
+    if (!s) s = 0;
+    ms %= 1000;
+    let min = Math.floor(s / 60);
+    if (!min) min = 0;
+    s %= 60;
+    return `${min}:${s.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+  }
   
   static reprNote(noteid) {
     if (typeof(noteid) !== "number") return "";
@@ -45,6 +57,7 @@ export class MidiSerial {
   }
   
   static reprControlKey(key) {
+    const useMynthNames = true; // TODO Make this configurable somewhere, and take here as a parameter.
     switch (key) {
       // This list is exhaustive, to my knowledge.
       case 0x00: return "Bank MSB";
@@ -57,11 +70,11 @@ export class MidiSerial {
       case 0x08: return "Balance MSB";
       case 0x0a: return "Pan MSB";
       case 0x0b: return "Expression MSB";
-      case 0x0c: return "Effect 1 MSB";
-      case 0x0d: return "Effect 2 MSB";
-      case 0x0e: return "Effect 3 MSB";
-      case 0x0f: return "Effect 4 MSB";
-      case 0x10: return "GP 1 MSB";
+      case 0x0c: return useMynthNames ? "Attack Time Low, ms" : "Effect 1 MSB";
+      case 0x0d: return useMynthNames ? "Attack Level Low" : "Effect 2 MSB";
+      case 0x0e: return useMynthNames ? "Decay Time Low, ms" : "Effect 3 MSB";
+      case 0x0f: return useMynthNames ? "Sustain Level Low" : "Effect 4 MSB";
+      case 0x10: return useMynthNames ? "Release Time Low, 8ms" : "GP 1 MSB";
       case 0x11: return "GP 2 MSB";
       case 0x12: return "GP 3 MSB";
       case 0x13: return "GP 4 MSB";
@@ -75,25 +88,25 @@ export class MidiSerial {
       case 0x28: return "Balance LSB";
       case 0x2a: return "Pan LSB";
       case 0x2b: return "Expression LSB";
-      case 0x2c: return "Effect 1 LSB";
-      case 0x2d: return "Effect 2 LSB";
-      case 0x2e: return "Effect 3 LSB";
-      case 0x2f: return "Effect 4 LSB";
-      case 0x30: return "GP 1 LSB";
+      case 0x2c: return useMynthNames ? "Attack Time High, ms" : "Effect 1 LSB";
+      case 0x2d: return useMynthNames ? "Attack Level High" : "Effect 2 LSB";
+      case 0x2e: return useMynthNames ? "Decay Time High, ms" : "Effect 3 LSB";
+      case 0x2f: return useMynthNames ? "Sustain Level High" : "Effect 4 LSB";
+      case 0x30: return useMynthNames ? "Release Time High, 8ms" : "GP 1 LSB";
       case 0x31: return "GP 2 LSB";
       case 0x32: return "GP 3 LSB";
       case 0x33: return "GP 4 LSB";
-      case 0x40: return "Sustain Switch";
+      case 0x40: return "Sustain Switch"; // used by Mynth, same name.
       case 0x41: return "Porta Switch";
       case 0x42: return "Sustenuto Switch";
       case 0x43: return "Soft Switch";
       case 0x44: return "Legato Switch";
       case 0x45: return "Hold 2 Switch";
-      case 0x46: return "C1 Sound Variation";
-      case 0x47: return "C2 Timbre";
-      case 0x48: return "C3 Release Time";
-      case 0x49: return "C4 Attack Time";
-      case 0x4a: return "C5 Brightness";
+      case 0x46: return useMynthNames ? "Wave Select 0..7" : "C1 Sound Variation";
+      case 0x47: return useMynthNames ? "Wheel Range, dimes" : "C2 Timbre";
+      case 0x48: return useMynthNames ? "Warble Range, dimes" : "C3 Release Time";
+      case 0x49: return useMynthNames ? "Warble Rate, hz" : "C4 Attack Time";
+      case 0x4a: return useMynthNames ? "Warble Phase" : "C5 Brightness";
       case 0x4b: return "C6";
       case 0x4c: return "C7";
       case 0x4d: return "C8";
@@ -118,6 +131,7 @@ export class MidiSerial {
       case 0x7e: return "Poly Switch";
       case 0x7f: return "Poly On";
     }
+    return "";
   }
   
   static reprMetaKey(key) {

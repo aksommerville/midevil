@@ -33,6 +33,7 @@ export class EventsModal extends EventTarget {
     this.events = [];
     this.originalEvents = [];
     this.ticksPerQnote = 0; // Necessary for quantization, if the user asks for that.
+    this.usPerQnote = 0; // For calculating real time.
     
     this.element.addEventListener("change", (event) => this.onChange(event));
   }
@@ -45,6 +46,10 @@ export class EventsModal extends EventTarget {
   
   setTicksPerQnote(division) {
     this.ticksPerQnote = division || 0;
+  }
+  
+  setUsPerQnote(usPerQnote) {
+    this.usPerQnote = usPerQnote;
   }
   
   populateUi() {
@@ -158,6 +163,13 @@ export class EventsModal extends EventTarget {
       event[key] = subvalue;
       changed = true;
     }
+    if (changed) {
+      if (key === "opcode") {
+        // This is heavy-handed, rebuild the whole UI when opcode changes.
+        // But necessary. There's a lot of presentation decision-making based on opcode.
+        this.populateUi();
+      }
+    }
     return changed;
   }
   
@@ -236,6 +248,12 @@ export class EventsModal extends EventTarget {
             tattle.innerText = MidiSerial.reprMetaKey(+input.value);
           });
         } break;
+      case "time": {
+          const tattle = this.dom.spawn(td, "SPAN", MidiSerial.reprTime(value, this.ticksPerQnote, this.usPerQnote));
+          input.addEventListener("change", () => {
+            tattle.innerText = MidiSerial.reprTime(+input.value, this.ticksPerQnote, this.usPerQnote)
+          });
+        } break;
     }
   }
   
@@ -301,7 +319,7 @@ export class EventsModal extends EventTarget {
     const table = this.dom.spawn(this.element, "TABLE");
     this.spawnWideTextRow(table, "Editing 1 event");
     this.spawnImmutableRow(table, "ID", event.id);
-    this.spawnNumberRow(table, "time", "Time", 0, 0x7fffffff, event.time);
+    this.spawnNumberRow(table, "time", "Time", 0, 0x7fffffff, event.time, "time");
     this.spawnNumberRow(table, "trackid", "Track", 0, 99, event.trackid);
     if (event.chid >= 0) { // Meta and Sysex have (chid==-1), and it's not meaningful or mutable.
       this.spawnNumberRow(table, "chid", "Channel", 0, 15, event.chid);

@@ -192,6 +192,7 @@ export class EventListModal extends EventTarget {
   editEvent(event) {
     const eventsModal = this.dom.spawnModal(EventsModal);
     eventsModal.setTicksPerQnote(this.song.division);
+    eventsModal.setUsPerQnote(this.song.getTempo(false));
     eventsModal.setEvents([event]);
     
     eventsModal.addEventListener("mid.eventsEdited", (editedEvent) => {

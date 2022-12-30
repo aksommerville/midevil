@@ -116,8 +116,8 @@ export class PlayheadRibbon extends EventTarget {
     if (rangePixels < this.element.height) { // arbitrary threshold: narrower than bar height to delete range
       this.songPlayService.setLoop(0, 0);
     } else {
-      const anchorTime = Math.floor(this.chartRenderer.songTimeForViewX(this.loopAnchor));
-      const mouseTime = Math.floor(this.chartRenderer.songTimeForViewX(event.x));
+      const anchorTime = Math.max(0, Math.round(this.chartRenderer.songTimeForViewX(this.loopAnchor)));
+      const mouseTime = Math.max(0, Math.round(this.chartRenderer.songTimeForViewX(event.x)));
       this.songPlayService.setLoop(Math.min(anchorTime, mouseTime), Math.max(anchorTime, mouseTime));
     }
     this.loopAnchor = this.loopInProgressEdge = 0;

@@ -67,16 +67,7 @@ export class EditorUi extends EventTarget {
   
   loadFile(serial) {
     if (serial) {
-      this.song = new Song(serial);
-      this.song.combine();
-      this.chartUi.setSong(this.song);
-      this.songPlayService.setSong(this.song);
-      this.dispatchEvent(new SongDirtyEvent(() => {
-        const dst = this.song.encode();
-        this.song.combine();
-        return dst;
-      }));
-      this.dispatchEvent(new TrackCountChangedEvent(this.song.getTrackCount()));
+      this.loadFileDecoded(new Song(serial));
     } else {
       this.song = null;
       this.chartUi.setSong(null);
@@ -85,6 +76,20 @@ export class EditorUi extends EventTarget {
       this.dispatchEvent(new TrackCountChangedEvent(0));
     }
     this.resizeScroller();
+  }
+  
+  loadFileDecoded(song) {
+    if (!song) return this.loadFile(null);
+    this.song = song;
+    this.song.combine();
+    this.chartUi.setSong(this.song);
+    this.songPlayService.setSong(this.song);
+    this.dispatchEvent(new SongDirtyEvent(() => {
+      const dst = this.song.encode();
+      this.song.combine();
+      return dst;
+    }));
+    this.dispatchEvent(new TrackCountChangedEvent(this.song.getTrackCount()));
   }
   
   // Owner may call for a full reset, eg after changing division, or other broad Song changes.

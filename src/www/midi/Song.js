@@ -144,6 +144,35 @@ export class Song {
     event.serial = new Uint8Array([ tempo >> 16, tempo >> 8, tempo ]);
   }
   
+  /* Convert between canonical ticks and real seconds.
+   * This assumes a single tempo, as we do in general (but MIDI doesn't).
+   */
+  secondsFromTicks(ticks) {
+    const usPerQnote = this.getTempo(false);
+    return (ticks * usPerQnote) / (this.division * 1000000);
+  }
+  ticksFromSeconds(seconds) {
+    const usPerQnote = this.getTempo(false);
+    return (seconds * this.division * 1000000) / usPerQnote;
+  }
+  
+  // Deep copy.
+  copy() {
+    const dst = new Song();
+    dst.format = this.format;
+    dst.trackCount = this.trackCount;
+    dst.division = this.division;
+    dst.combined = this.combined;
+    dst.events = this.events.map(e => this.copyEvent(e));
+    return dst;
+  }
+  
+  copyEvent(src) {
+    const dst = {...src};
+    if (dst.serial) dst.serial = new Uint8Array(dst.serial);
+    return dst;
+  }
+  
   /* In combined mode, there are no Note Off events, and each Note On has (duration,offVelocity).
    * Songs are uncombined after decode, and we uncombine again before encoding.
    * You can combine after decoding, if it's more convenient for UI that way.
@@ -287,11 +316,71 @@ export class Song {
     return null;
   }
   
+  /* Force each track to end with a Meta End of Track event.
+   * While we're in there, count the actual MTrk chunks we're going to make and update the header trackCount.
+   */
+  sanitizeTrackCountAndTerminators() {
+    const eventIndicesToDelete = [];
+    const terminatorByTrackid = [];
+    const lastTimeByTrackid = [];
+    for (let i=0; i<this.events.length; i++) {
+      const event = this.events[i];
+      if (!lastTimeByTrackid[event.trackid] || (event.time > lastTimeByTrackid[event.trackid])) {
+        lastTimeByTrackid[event.trackid] = event.time;
+      }
+      if ((event.opcode === 0xff) && (event.a === 0x2f)) {
+        if (terminatorByTrackid[event.trackid]) {
+          // Multiple EOT events! Delete all but the first.
+          eventIndicesToDelete.push(i);
+        } else {
+          terminatorByTrackid[event.trackid] = event;
+        }
+      }
+    }
+    if (eventIndicesToDelete.length) {
+      console.log(`WARNING: Deleting ${eventIndicesToDelete.length} redundant End of Track events`);
+      // Run backward so the indices stay fresh.
+      for (let i=eventIndicesToDelete.length; i-->0; ) {
+        const index = eventIndicesToDelete[i];
+        this.song.events.splice(index, 1);
+      }
+    }
+    if (lastTimeByTrackid.length !== this.trackCount) {
+      // Update track count based on the highest index (ie count unused trackid).
+      const newCount = lastTimeByTrackid.length;
+      console.log(`WARNING: Updating MThd trackCount from ${this.trackCount} to ${newCount}`);
+      this.trackCount = newCount;
+    }
+    for (let trackid=0; trackid<lastTimeByTrackid.length; trackid++) {
+      const lastTime = lastTimeByTrackid[trackid];
+      if (isNaN(lastTime)) continue; // sparse is ok, and there won't be a terminator if there's no lastTime.
+      if (!terminatorByTrackid[trackid]) {
+        // Terminator missing. Add one.
+        console.log(`WARNING: Adding End of Track event for track ${trackid}`);
+        const event = this.createEvent(lastTime + 1); // +1 to be safe. Might mess up the user's timing if he's super precise?
+        event.opcode = 0xff;
+        event.a = 0x2f;
+      } else {
+        const term = terminatorByTrackid[trackid];
+        if (term.time < lastTime) {
+          // Terminator exists but there are more events on that track.
+          const newTime = lastTime + 1;
+          console.log(`WARNING: Moving End of Track event on track ${trackid} from time ${term.time} to ${newTime}`);
+          term.time = newTime;
+          // Must painstakingly sort the whole thing after each change, since there could be more insertions during this loop.
+          this.sortEvents();
+        }
+      }
+    }
+  }
+  
   /* Encode to file.
    ***************************************************************/
    
   encode() {
+    // Important to uncombine before sanitizing: Typically the last real event on a track is a Note Off.
     this.uncombine();
+    this.sanitizeTrackCountAndTerminators();
     const dst = new Encoder();
     
     dst.raw("MThd");
