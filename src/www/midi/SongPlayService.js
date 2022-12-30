@@ -287,6 +287,17 @@ export class SongPlayService extends EventTarget {
     this.playing = false;
     this.releaseAll();
   }
+    
+  // A little heavy-handed? Run through the whole song up to the playhead and fire all non-note events.
+  // To get all channels in the proper state.
+  prerunChannelConfig() {
+    for (const event of this.song.events) {
+      if (event.time >= this.playheadTime) break;
+      if (event.opcode === 0x90) continue;
+      if (event.opcode >= 0xf0) continue;
+      this.playEvent(event);
+    }
+  }
   
   startIfStopped() {
     if (this.playing) return;
@@ -297,6 +308,7 @@ export class SongPlayService extends EventTarget {
     this.msPerTick = this.usPerQnote / (this.song.division * 1000);
     this.timeOffset = this.nextEventTime - this.playheadTime * this.msPerTick;
     this.calculateMetronomeNextTime();
+    this.prerunChannelConfig();
     // It would read better to do like (window.setTimeout(() => this.update(), calculatedMsToNextEvent)).
     // But setTimeout is not reliable enough for the precise timing music demands.
     // Instead, have it poll us at video timing, and at each poll we examine time continuously.
@@ -305,16 +317,7 @@ export class SongPlayService extends EventTarget {
   
   updateForAdjustedPlayheadIfPlaying() {
     if (!this.playing) return;
-    
-    // A little heavy-handed? Run through the whole song up to the playhead and fire all non-note events.
-    // To get all channels in the proper state.
-    for (const event of this.song.events) {
-      if (event.time >= this.playheadTime) break;
-      if (event.opcode === 0x90) continue;
-      if (event.opcode >= 0xf0) continue;
-      this.playEvent(event);
-    }
-    
+    this.prerunChannelConfig();
     this.nextEventTime = Date.now();
     this.eventp = this.song.searchEventsByTime(this.playheadTime, -1);
     this.usPerQnote = this.song.getTempo(false);

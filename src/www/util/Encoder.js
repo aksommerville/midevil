@@ -111,7 +111,9 @@ export class Encoder {
   }
   
   rawInputAsUint8Array(v) {
-    if (v instanceof ArrayBuffer) {
+    if (!v) {
+      return new Uint8Array([]);
+    } else if (v instanceof ArrayBuffer) {
       return new Uint8Array(v);
     } else if (v instanceof Uint8Array) {
       return v;
