@@ -22,4 +22,4 @@ MIDI file editor that runs in a web browser.
 - [ ] Find a more elegant way to show Meta, Control, Aftertouch. Don't just print in the chart like notes.
 - [ ] Track list in visibility popup needs to update when you add a track.
 - [x] Loop range allows negative; it should clamp at zero.
-- [ ] Special helper modal for Mynth-specific channel setup.
+- [x] Special helper modal for Mynth-specific channel setup.

@@ -76,6 +76,12 @@ export class Dom {
     return controller;
   }
   
+  queryControllerClass(parent, clazz) {
+    const child = parent.querySelector(`.${clazz.name}`);
+    if (child._fmn_controller instanceof clazz) return child._fmn_controller;
+    return null;
+  }
+  
   spawnModal(clazz, overrides) {
     const frame = this._spawnModalFrame();
     const controller = this.spawnController(frame, clazz, overrides);

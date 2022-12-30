@@ -46,6 +46,7 @@ body {
   box-shadow: #000 0 0 2em 0.5em;
   padding: 1em;
   position: absolute;
+  max-width: 90vw;
 }
 
 /* RootUi.
@@ -246,4 +247,37 @@ body {
 
 .ChannelHeadersModal tr:nth-child(odd) {
   background-color: #ddd;
+}
+
+/* MynthChannelHeadersModal.
+ *******************************************************/
+ 
+.MynthChannelHeadersModal .channelsContainer {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.MynthChannelHeadersModal .channel {
+  min-width: 100px;
+  min-height: 100px;
+  margin: 0.5em;
+  border: 1px solid #000;
+}
+
+.MynthChannelHeadersModal .channel h3 {
+  margin: 0;
+}
+
+.MynthChannelHeadersModal .channel .warning {
+  background-color: #fc0;
+  border: 1px solid #000;
+}
+
+.MynthChannelHeadersModal .tattle {
+  background-color: #040;
+  color: #ff0;
+  font-family: monospace;
+  font-size: 9pt;
+  white-space: pre;
 }

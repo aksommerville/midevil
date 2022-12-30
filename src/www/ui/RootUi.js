@@ -8,20 +8,24 @@ import { EditorUi } from "./EditorUi.js";
 import { QuantizationModal } from "./QuantizationModal.js";
 import { EventListModal } from "./EventListModal.js";
 import { ChannelHeadersModal } from "./ChannelHeadersModal.js";
+import { MynthChannelHeadersModal } from "./MynthChannelHeadersModal.js";
 import { Song } from "../midi/Song.js";
 import { MidiBus } from "../midi/MidiBus.js";
 import { UndoService } from "../midi/UndoService.js";
+import { Operations } from "../midi/Operations.js";
+import { SongPlayService } from "../midi/SongPlayService.js";
  
 export class RootUi {
   static getDependencies() {
-    return [HTMLElement, Dom, Window, MidiBus, UndoService];
+    return [HTMLElement, Dom, Window, MidiBus, UndoService, SongPlayService];
   }
-  constructor(element, dom, window, midiBus, undoService) {
+  constructor(element, dom, window, midiBus, undoService, songPlayService) {
     this.element = element;
     this.dom = dom;
     this.window = window;
     this.midiBus = midiBus;
     this.undoService = undoService;
+    this.songPlayService = songPlayService;
     
     this.toolbar = null;
     this.editor = null;
@@ -63,10 +67,12 @@ export class RootUi {
     switch (name) {
       case "newSong": this.onNewSong(); break;
       case "channelHeaders": this.onEditChannelHeaders(); break;
+      case "mynthChannelHeaders": this.onEditMynthChannelHeaders(); break;
       case "events": this.onEditEvents(); break;
       case "quantizeTime": this.onQuantizeTime(); break;
       case "division": this.onEditDivision(); break;
       case "tempo": this.onEditTempo(); break;
+      case "demo": this.onLoadDemo(); break;
       default: console.log(`RootUi.onOperation, unknown op '${name}'`);
     }
   }
@@ -83,7 +89,17 @@ export class RootUi {
     this.undoService.push(this.editor.song);
     modal.setup(this.editor.song);
     modal.addEventListener("mid.headersChanged", () => {
-      this.editor.reset();
+      this.songPlayService.prerunChannelConfig();
+    });
+  }
+  
+  onEditMynthChannelHeaders() {
+    if (!this.editor.song) return;
+    const modal = this.dom.spawnModal(MynthChannelHeadersModal);
+    this.undoService.push(this.editor.song);
+    modal.setup(this.editor.song);
+    modal.addEventListener("mid.mynthChannelHeadersChanged", () => {
+      this.songPlayService.prerunChannelConfig();
     });
   }
   
@@ -144,6 +160,10 @@ export class RootUi {
     this.undoService.push(this.editor.song);
     this.editor.song.setTempo(newTempo);
     this.editor.reset();
+  }
+  
+  onLoadDemo() {
+    this.editor.loadFile(Operations.DEMO_FILE);
   }
   
   onOutputSelection(name) {

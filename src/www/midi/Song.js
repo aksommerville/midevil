@@ -232,7 +232,7 @@ export class Song {
     return null;
   }
   
-  createEvent(time) {
+  createEvent(time, order=0) {
     const event = {
       id: Song.nextEventId++,
       time,
@@ -244,7 +244,7 @@ export class Song {
       duration: 0,
       offVelocity: 0x40,
     };
-    let p = this.searchEventsByTime(time, 0);
+    let p = this.searchEventsByTime(time, order);
     this.events.splice(p, 0, event);
     return event;
   }
