@@ -35,6 +35,7 @@ export class MidiBus extends EventTarget {
     this.inputListeners = []; // [device, cb] so we can unlisten on state changes
     this.playthroughDevice = null; // Output device, we echo all inputs to it.
     // "playthroughDevice" is also the main output, poor choice of name initially. There's just one output.
+    this.playthroughSocket = null;
     
     if (this.window.navigator.requestMIDIAccess) {
       this.window.navigator.requestMIDIAccess().then(access => {
@@ -59,24 +60,37 @@ export class MidiBus extends EventTarget {
     return Array.from(this.midiAccess.inputs).map(([id, device]) => device);
   }
   
+  // outputDeviceId may also be a WebSocket instance.
   playthrough(outputDeviceId) {
+    if (outputDeviceId instanceof WebSocket) {
+      try { this.playthroughDevice.send([0xff]); } catch (e) {}
+      this.playthroughDevice = null;
+      this.playthroughSocket = outputDeviceId;
+      return true;
+    }
     if (!this.midiAccess) return false;
     for (const [id, device] of this.midiAccess.outputs) {
       if (device.id === outputDeviceId) {
         this.playthroughDevice = device;
+        this.playthroughSocket = null;
         return true;
       }
     }
     if (this.playthroughDevice) {
       try { this.playthroughDevice.send([0xff]); } catch (e) {}
       this.playthroughDevice = null;
+      this.playthroughSocket = null;
     }
     return false;
   }
   
   sendOutput(serial) {
-    if (!this.playthroughDevice) return;
-    this.playthroughDevice.send(serial);
+    if (this.playthroughSocket) {
+      if (!(serial instanceof Uint8Array)) serial = new Uint8Array(serial);
+      this.playthroughSocket.send(serial);
+    } else if (this.playthroughDevice) {
+      this.playthroughDevice.send(serial);
+    }
   }
   
   panic() {
@@ -121,6 +135,9 @@ export class MidiBus extends EventTarget {
     this.dispatchEvent(new MidiEvent(event.target, event.data));
     if (this.playthroughDevice) {
       this.playthroughDevice.send(event.data);
+    } else if (this.playthroughSocket) {
+      const serial = new Uint8Array(event.data);
+      this.playthroughSocket.send(event.data);
     }
   }
 }

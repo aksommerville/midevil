@@ -163,6 +163,7 @@ export class ToolbarUi extends EventTarget {
     const menu = this.element.querySelector("select.output");
     menu.innerHTML = "";
     this.dom.spawn(menu, "OPTION", "No Output", { value: "" });
+    this.dom.spawn(menu, "OPTION", "WebSocket", { value: "websocket" });
     for (const device of this.midiBus.getOutputDevices()) {
       this.dom.spawn(menu, "OPTION", device.name, { value: device.id });
     }

@@ -167,7 +167,16 @@ export class RootUi {
   }
   
   onOutputSelection(name) {
-    this.midiBus.playthrough(name);
+    if (name === "websocket") {
+      const host = this.window.prompt("Host and port:");
+      if (!host) return;
+      const socket = new WebSocket(`ws:${host}/midi`);
+      socket.addEventListener("open", () => {
+        this.midiBus.playthrough(socket);
+      });
+    } else {
+      this.midiBus.playthrough(name);
+    }
   }
   
   onKeyPress(event) {
