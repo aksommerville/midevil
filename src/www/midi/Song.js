@@ -342,7 +342,7 @@ export class Song {
       // Run backward so the indices stay fresh.
       for (let i=eventIndicesToDelete.length; i-->0; ) {
         const index = eventIndicesToDelete[i];
-        this.song.events.splice(index, 1);
+        this.events.splice(index, 1);
       }
     }
     if (lastTimeByTrackid.length !== this.trackCount) {

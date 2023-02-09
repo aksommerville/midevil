@@ -23,3 +23,4 @@ MIDI file editor that runs in a web browser.
 - [ ] Track list in visibility popup needs to update when you add a track.
 - [x] Loop range allows negative; it should clamp at zero.
 - [x] Special helper modal for Mynth-specific channel setup.
+- [ ] Keyboard modifiers mostly don't work on MacOS (Chrome at least), they get interpretted as right click.
