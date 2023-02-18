@@ -173,6 +173,20 @@ export class Song {
     return dst;
   }
   
+  getFirstNoteTime() {
+    for (const event of this.events) {
+      if (event.opcode === 0x90) return event.time;
+    }
+    return 0;
+  }
+  
+  shuffleTimes(dticks) {
+    for (const event of this.events) {
+      event.time += dticks;
+      if (event.time < 0) event.time = 0;
+    }
+  }
+  
   /* In combined mode, there are no Note Off events, and each Note On has (duration,offVelocity).
    * Songs are uncombined after decode, and we uncombine again before encoding.
    * You can combine after decoding, if it's more convenient for UI that way.
@@ -233,6 +247,7 @@ export class Song {
   }
   
   createEvent(time, order=0) {
+    time = Math.round(time);
     const event = {
       id: Song.nextEventId++,
       time,

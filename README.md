@@ -24,3 +24,8 @@ MIDI file editor that runs in a web browser.
 - [x] Loop range allows negative; it should clamp at zero.
 - [x] Special helper modal for Mynth-specific channel setup.
 - [ ] Keyboard modifiers mostly don't work on MacOS (Chrome at least), they get interpretted as right click.
+- [ ] "now playing" notes can be occluded by "background" notes, unexpectedly
+- [x] Opened song after recording two tracks, and the second track timing was all screwed up. like it was losing one tick per bar or something.
+- - !!! This is definitely happening, and not just on new tracks !!!
+- - i think this might be caused by:
+- [x] Does recording capture fractional times? It should quantize to 1 tick. 

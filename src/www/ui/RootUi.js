@@ -72,7 +72,7 @@ export class RootUi {
       case "quantizeTime": this.onQuantizeTime(); break;
       case "division": this.onEditDivision(); break;
       case "tempo": this.onEditTempo(); break;
-      case "demo": this.onLoadDemo(); break;
+      case "zeroTime": this.onZeroTime(); break;
       default: console.log(`RootUi.onOperation, unknown op '${name}'`);
     }
   }
@@ -162,8 +162,12 @@ export class RootUi {
     this.editor.reset();
   }
   
-  onLoadDemo() {
-    this.editor.loadFile(Operations.DEMO_FILE);
+  onZeroTime() {
+    if (!this.editor.song) return;
+    const startTime = this.editor.song.getFirstNoteTime();
+    if (!startTime) return;
+    this.editor.song.shuffleTimes(-startTime);
+    this.editor.reset();
   }
   
   onOutputSelection(name) {
