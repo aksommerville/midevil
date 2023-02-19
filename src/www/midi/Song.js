@@ -375,6 +375,7 @@ export class Song {
         const event = this.createEvent(lastTime + 1); // +1 to be safe. Might mess up the user's timing if he's super precise?
         event.opcode = 0xff;
         event.a = 0x2f;
+        event.trackid = trackid;
       } else {
         const term = terminatorByTrackid[trackid];
         if (term.time < lastTime) {
@@ -389,6 +390,48 @@ export class Song {
     }
   }
   
+  /* At time zero, we'll enforce a few extra sequencing rules, per channel:
+   *  - Bank Select before Program Change.
+   *  - Program Change before Control Change (except Bank Select).
+   *  - Control Change before everything else.
+   * If events for one channel are on different tracks, we can't be sure that they'll play back in the right order.
+   * But that's your problem, not mine. I recommend one channel per track exactly.
+   */
+  sanitizeTimeZeroSequence() {
+    for (let ai=1; ai<this.events.length; ai++) {
+      const a = this.events[ai];
+      if (a.time) break;
+      for (let bi=0; bi<ai; bi++) {
+        const b = this.events[bi];
+        if (this.compareTimeZeroSequence(b, a) <= 0) continue;
+        console.log(`*** time zero sequence correction ${ai}=>${bi}`, { a, b });
+        this.events.splice(ai, 1);
+        this.events.splice(bi, 0, a);
+        break;
+      }
+    }
+  }
+  compareTimeZeroSequence(a, b) {
+    // Ignore (time); they must both be zero.
+    // Different channels, don't care.
+    if (a.chid !== b.chid) return 0;
+    // Describe each event as [1,2,3,4] = [Bank Select, Program Change, other Control Change, other]
+    const ad = this.describeTimeZeroEvent(a);
+    const bd = this.describeTimeZeroEvent(b);
+    if (ad < bd) return -1;
+    if (ad > bd) return 1;
+    return 0;
+  }
+  describeTimeZeroEvent(event) {
+    if (event.opcode === 0xb0) { // Control Change
+      if (event.a === 0x00) return 1; // Bank Select MSB
+      if (event.b === 0x20) return 1; // Bank Select LSB
+      return 3; // other Control Change
+    }
+    if (event.opcode === 0xc0) return 2; // Program Change
+    return 4; // other
+  }
+  
   /* Encode to file.
    ***************************************************************/
    
@@ -396,6 +439,7 @@ export class Song {
     // Important to uncombine before sanitizing: Typically the last real event on a track is a Note Off.
     this.uncombine();
     this.sanitizeTrackCountAndTerminators();
+    this.sanitizeTimeZeroSequence();
     const dst = new Encoder();
     
     dst.raw("MThd");
