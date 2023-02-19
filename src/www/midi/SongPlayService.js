@@ -66,6 +66,7 @@ export class SongPlayService extends EventTarget {
     this.metronomeVelocity = 0x7f;
     this.metronomeRate = 0; // qnotes
     this.metronomeNextTime = 0; // absolute ms
+    this.eventsRecordedInThisRun = []; // They're played via playthru; ignore if we notice them in the song.
     
     /* Important! The song has Note On and Note Off combined. We need to track held notes and generate those Note Offs ourselves.
      * Array of {chid,noteid,velocity,time} with (time) precalculated to absolute ms.
@@ -206,6 +207,7 @@ export class SongPlayService extends EventTarget {
   beginRecord() {
     this.startIfStopped();
     this.recording = true;
+    this.eventsRecordedInThisRun = [];
     if (!this.midiInListener) {
       this.midiInListener = e => this.onMidiIn(e);
       this.midiBus.addEventListener("mid.midi", this.midiInListener);
@@ -215,6 +217,7 @@ export class SongPlayService extends EventTarget {
   endRecord() {
     this.releaseAll();
     this.recording = false;
+    this.eventsRecordedInThisRun = [];
     if (this.midiInListener) {
       this.midiBus.removeEventListener("mid.midi", this.midiInListener);
       this.midiInListener = null;
@@ -244,6 +247,7 @@ export class SongPlayService extends EventTarget {
   recordNoteOn(serial) {
     const event = this.song.addEncodedEventAtTime(this.playheadTime, serial);
     if (!event) return;
+    this.eventsRecordedInThisRun.push(event);
     this.recordingNotes.push({
       chid: event.chid,
       noteid: event.a,
@@ -392,7 +396,11 @@ export class SongPlayService extends EventTarget {
         this.nextEventTime = eventTimeMs;
         return;
       }
-      this.playEvent(event);
+      if (this.eventsRecordedInThisRun.indexOf(event) >= 0) {
+        // playthru should have handled it, ignore.
+      } else {
+        this.playEvent(event);
+      }
       this.eventp++;
     }
   }
