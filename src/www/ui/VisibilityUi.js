@@ -38,7 +38,9 @@ export class VisibilityUi extends EventTarget {
     this.element = element;
     this.dom = dom;
     
-    this.trackCount = 0;
+    // I'm getting sick of this not updating, and not up to fixing it.
+    // Just assume there will be no more than 16 tracks. That's sensible -- I normally put each channel on its own track.
+    this.trackCount = 16;
     
     this.element.classList.add("poppable");
     
@@ -47,6 +49,7 @@ export class VisibilityUi extends EventTarget {
   }
   
   setTrackCount(c) {
+    return;
     if (c === this.trackCount) return;
     this.trackCount = c;
     this.populateUi();

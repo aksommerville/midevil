@@ -29,3 +29,5 @@ MIDI file editor that runs in a web browser.
 - - !!! This is definitely happening, and not just on new tracks !!!
 - - i think this might be caused by:
 - [x] Does recording capture fractional times? It should quantize to 1 tick. 
+- [ ] Playback of fresh notes cuts off while recording
+- - Must be the song player notices the thing we've added to its event list and plays that (in addition to the live playthrough)
