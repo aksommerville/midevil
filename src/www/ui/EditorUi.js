@@ -177,4 +177,9 @@ export class EditorUi extends EventTarget {
   applyEdits(events) {
     this.chartUi.chartEditor.applyEdits(events);
   }
+  
+  setLoopRange(a, z) {
+    this.songPlayService.setLoop(a, z);
+    this.playheadRibbon.render();
+  }
 }

@@ -21,6 +21,7 @@ export class Operations {
       { label: "Division", name: "division" },
       { label: "Tempo", name: "tempo" },
       { label: "Zero Time", name: "zeroTime" },
+      { label: "Loop All", name: "loopAll" },
     ];
   }
 }

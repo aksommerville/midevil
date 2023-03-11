@@ -73,6 +73,7 @@ export class RootUi {
       case "division": this.onEditDivision(); break;
       case "tempo": this.onEditTempo(); break;
       case "zeroTime": this.onZeroTime(); break;
+      case "loopAll": this.onLoopAll(); break;
       default: console.log(`RootUi.onOperation, unknown op '${name}'`);
     }
   }
@@ -168,6 +169,12 @@ export class RootUi {
     if (!startTime) return;
     this.editor.song.shuffleTimes(-startTime);
     this.editor.reset();
+  }
+  
+  onLoopAll() {
+    if (!this.editor.song) return;
+    if (this.editor.song.events.length < 1) return;
+    this.editor.setLoopRange(0, this.editor.song.events[this.editor.song.events.length - 1].time);
   }
   
   onOutputSelection(name) {
