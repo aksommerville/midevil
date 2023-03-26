@@ -36,6 +36,7 @@ export class MidiBus extends EventTarget {
     this.playthroughDevice = null; // Output device, we echo all inputs to it.
     // "playthroughDevice" is also the main output, poor choice of name initially. There's just one output.
     this.playthroughSocket = null;
+    this.inputChid = -1; // >=0 to override
     
     if (this.window.navigator.requestMIDIAccess) {
       this.window.navigator.requestMIDIAccess().then(access => {
@@ -132,6 +133,16 @@ export class MidiBus extends EventTarget {
   }
   
   onMidiMessage(event) {
+    if ((this.inputChid >= 0) && (this.inputChid < 0x10)) {
+      if ((event.data.length >= 1) && (event.data[0] >= 0x80) && (event.data[0] < 0xf0)) {
+        const newData = new Uint8Array(event.data);
+        newData[0] = (newData[0] & 0xf0) | this.inputChid;
+        event = {
+          target: event.target,
+          data: newData,
+        };
+      }
+    }
     this.dispatchEvent(new MidiEvent(event.target, event.data));
     if (this.playthroughDevice) {
       this.playthroughDevice.send(event.data);

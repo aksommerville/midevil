@@ -39,6 +39,22 @@ class OutputSelectionEvent extends Event {
   }
 }
 
+class InputTrackEvent extends Event {
+  constructor(trackId) {
+    super("mid.inputTrack");
+    this.trackId = trackId;
+  }
+}
+
+class InputChannelEvent extends Event {
+  // (chid) -1 to record channels as received.
+  // 0..15 to overwrite incoming events.
+  constructor(chid) {
+    super("mid.inputChannel");
+    this.chid = chid;
+  }
+}
+
 export class ToolbarUi extends EventTarget {
   static getDependencies() {
     return [HTMLElement, Dom, Window, Operations, MidiBus, SongPlayService];
@@ -142,10 +158,17 @@ export class ToolbarUi extends EventTarget {
     
     this.dom.spawn(viewRow, "DIV", ["mouseTattle"]);
     
-    /* Bottom row: Playback controls.
+    /* Bottom row: Input and playback controls.
      */
     
     this.metronomeUi = this.dom.spawnController(playRow, MetronomeUi);
+    
+    const inputTrackMenu = this.dom.spawn(playRow, "SELECT", ["inputTrack"], { "on-change": () => this.onInputTrackChange() });
+    for (let i=0; i<20; i++) this.dom.spawn(inputTrackMenu, "OPTION", { value: i }, `R Trk: ${i}`);
+    
+    const inputChannelMenu = this.dom.spawn(playRow, "SELECT", ["inputChannel"], { "on-change": () => this.onInputChannelChange() });
+    this.dom.spawn(inputChannelMenu, "OPTION", { value: -1 }, "R Ch: From bus");
+    for (let i=0; i<16; i++) this.dom.spawn(inputChannelMenu, "OPTION", { value: i }, `R Ch: ${i}`);
     
     const outputMenu = this.dom.spawn(playRow, "SELECT", ["output"], { "on-change": () => this.onOutputChange() });
     this.populateOutputMenu();
@@ -202,6 +225,16 @@ export class ToolbarUi extends EventTarget {
     const horzScale = this.element.querySelector("input[name='horzScale']")?.value;
     const vertScale = this.element.querySelector("input[name='vertScale']")?.value;
     this.dispatchEvent(new ViewScaleEvent(horzScale, vertScale));
+  }
+  
+  onInputTrackChange() {
+    const trackId = +this.element.querySelector(".inputTrack").value;
+    this.dispatchEvent(new InputTrackEvent(trackId));
+  }
+  
+  onInputChannelChange() {
+    const chid = +this.element.querySelector(".inputChannel").value;
+    this.dispatchEvent(new InputChannelEvent(chid));
   }
   
   onOutputChange() {

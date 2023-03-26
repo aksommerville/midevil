@@ -67,6 +67,8 @@ export class SongPlayService extends EventTarget {
     this.metronomeRate = 0; // qnotes
     this.metronomeNextTime = 0; // absolute ms
     this.eventsRecordedInThisRun = []; // They're played via playthru; ignore if we notice them in the song.
+    this.inputTrackId = 0;
+    this.inputChid = -1; // <0 to preserve from the bus, 0..15 to replace all inputs
     
     /* Important! The song has Note On and Note Off combined. We need to track held notes and generate those Note Offs ourselves.
      * Array of {chid,noteid,velocity,time} with (time) precalculated to absolute ms.
@@ -240,12 +242,12 @@ export class SongPlayService extends EventTarget {
   }
   
   recordVerbatim(serial) {
-    const event = this.song.addEncodedEventAtTime(this.playheadTime, serial);
+    const event = this.song.addEncodedEventAtTime(this.playheadTime, serial, this.inputTrackId, this.inputChid);
     if (!event) return;
   }
   
   recordNoteOn(serial) {
-    const event = this.song.addEncodedEventAtTime(this.playheadTime, serial);
+    const event = this.song.addEncodedEventAtTime(this.playheadTime, serial, this.inputTrackId, this.inputChid);
     if (!event) return;
     this.eventsRecordedInThisRun.push(event);
     this.recordingNotes.push({

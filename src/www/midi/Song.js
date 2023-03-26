@@ -297,7 +297,7 @@ export class Song {
   /* Give us a time in ticks, and an encoded event right off the wire.
    * If it's valid, we return the decoded event, which is also added to (this.events).
    */
-  addEncodedEventAtTime(time, serial) {
+  addEncodedEventAtTime(time, serial, trackId, chid) {
     if (time < 0) return null;
     if (!serial || (serial.length < 1)) return null;
     if (serial[0] < 0x80) return null;
@@ -306,7 +306,9 @@ export class Song {
     const event = this.createEvent(time);
     if (!event) return null;
     event.opcode = serial[0] & 0xf0;
-    event.chid = serial[0] & 0x0f;
+    if (trackId >= 0) event.trackId = trackId;
+    if ((chid >= 0) && (chid < 0x10)) event.chid = chid;
+    else event.chid = serial[0] & 0x0f;
     event.a = serial[1] || 0;
     event.b = serial[2] || 0;
     return event;

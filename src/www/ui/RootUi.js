@@ -52,6 +52,8 @@ export class RootUi {
     this.toolbar.addEventListener("mid.operation", (event) => this.onOperation(event.name));
     this.toolbar.addEventListener("mid.viewScale", (event) => this.editor.setViewScale(event.x, event.y));
     this.toolbar.addEventListener("mid.outputSelection", (event) => this.onOutputSelection(event.name));
+    this.toolbar.addEventListener("mid.inputTrack", (event) => this.onInputTrackSelection(event.trackId));
+    this.toolbar.addEventListener("mid.inputChannel", (event) => this.onInputChannelSelection(event.chid));
     this.toolbar.visibilityUi.addEventListener("mid.visibilityChange", (event) => this.editor.chartUi.setVisibility(event.model));
     
     this.editor.addEventListener("mid.songDirty", (event) => this.toolbar.fileDirty(event.cb));
@@ -175,6 +177,15 @@ export class RootUi {
     if (!this.editor.song) return;
     if (this.editor.song.events.length < 1) return;
     this.editor.setLoopRange(0, this.editor.song.events[this.editor.song.events.length - 1].time);
+  }
+  
+  onInputTrackSelection(trackId) {
+    this.songPlayService.inputTrackId = trackId;
+  }
+  
+  onInputChannelSelection(chid) {
+    this.songPlayService.inputChid = chid;
+    this.midiBus.inputChid = chid;
   }
   
   onOutputSelection(name) {
